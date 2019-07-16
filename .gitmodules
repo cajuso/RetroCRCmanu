@@ -1,0 +1,3 @@
+[submodule "aaltonen_scripts"]
+	path = aaltonen_scripts
+	url = https://github.com/rkataine/aaltonen_scripts
