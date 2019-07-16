@@ -1,3 +1,7 @@
+[submodule "aaltonen_scripts"]
+	path = aaltonen_scripts
+	url = https://github.com/rkataine/aaltonen_scripts
+  
 [submodule "jsva"]
 	path = jsva
 	url = https://github.com/esaskar/jsva
