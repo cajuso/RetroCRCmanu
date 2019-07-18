@@ -9,7 +9,7 @@ The scripts included in this repository are:
 
 * jsva @ d614039: Script utilized to join the structural variant calls and used as an input in the transduction_detection.py
 
-* Manuscript_23012019: R Code utilized to produce Figures 1-3 and 5-6, Multiple Linear regressionc model and Cox Proportional Hazards regression model.
+* Manuscript_23012019: R Code utilized to produce Figures 1-3 and 5-6, Multiple Linear regression model and Cox Proportional Hazards regression model.
 
 * Transduction_detection.py: The script uses as an input the output from the JSVA script to detect candidate transduction calls. The script will detect transduction calls based on the proximity of JSVA calls to a list of full-length reference L1 elements taking into account their orientation. The JSVA script should be run in the following order:
 
