@@ -7,11 +7,12 @@ The scripts included in this repository are:
 
 * Aaltonen_scripts @ 29fc269: Script utilized to call the polyA/T from the insertion calls. 
 
-* jsva @ d614039: Script utilized to join call the structural variation and used as an input in the transduction_detection.py
+* jsva @ d614039: Script utilized to join the structural variant calls and used as an input in the transduction_detection.py
 
 * Manuscript_23012019: R Code utilized to produce Figures 1-3 and 5-6, Multiple Linear model and Cox Proportional Hazards model.
 
-* Transduction_detection.py: The script uses as an input the output from the JSVA script to detect candidate transduction calls. The script will detect transduction calls based on the proximity of JSVA calls to a list of full-length reference L1 elements taking into account their orientation (Author:Päivi Sulo). The JSVA script should be run in the following order:
+* Transduction_detection.py: The script uses as an input the output from the JSVA script to detect candidate transduction calls. The script will detect transduction calls based on the proximity of JSVA calls to a list of full-length reference L1 elements taking into account their orientation. The JSVA script should be run in the following order:
+
   1.	merge_sv_event.py
   2.	split_into_breakpoints.sh
   3.	annotate_breakpoints.sh
