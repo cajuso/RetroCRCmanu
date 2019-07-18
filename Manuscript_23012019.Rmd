@@ -1,0 +1,470 @@
+---
+title: ""
+author: ""
+date: "23 tammikuuta 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Install packages if needed
+# Load libraries
+library(car)
+library(Epi)
+library(epitools)
+library(ggplot2)
+library(Hmisc)
+library(knitr)
+library(mfp)
+library(mgcv)
+library(muhaz)
+library(rstpm2)
+library(survival)
+library(survminer)
+library(PerformanceAnalytics)
+library(scales)
+library(xtable)
+library(tidyr)
+library(genoPlotR)
+
+```
+
+# Figure 1
+
+Distribution of somatic insertions across 202 colorectal tumors
+
+```{r, Figure 1a}
+
+# Open file
+Data<-read.table("Clinical.txt",sep="\t",header=T,stringsAsFactors=F,row.names=1) #Clinical.txt -> Supplementary Dataset 5; Insertion count = ins
+
+## Plot
+h1 <- hist(Data$ins,xlab="Insertion count", ylab="Frequency", col="darkslategrey",breaks = 20, axes=FALSE, main="",cex.lab=1.5)
+axis (side=1, at=seq(0,205,by=10))
+axis(side=2, at= seq(0,80,by=10))
+title("a)", adj=0)
+
+## Export plot
+
+svg(filename="Figure_1a.svg")
+h1 <- hist(Data$ins,xlab="Insertion count", ylab="Frequency", col="darkslategrey",breaks = 20, axes=FALSE, main="",cex.lab=1.5)
+axis (side=1, at=seq(0,205,by=10))
+axis(side=2, at= seq(0,80,by=10))
+title("a)", adj=0)
+dev.off()
+
+```
+
+Insertion density over replication time. The genome was stratified by replication time in five categories where 0 referred to the earliest replication timing. Replication time was extracted from Chen, C.-L. et al. Impact of replication timing on non-CpG and CpG substitution rates in mammalian genomes. Genome Res. 20, 447–457 (2010).
+
+```{r, Figure 1b}
+
+# Open file
+Density <-read.table("Density.txt",sep="\t",header=T,stringsAsFactors=FALSE,row.names=NULL )
+
+# Plot
+boxplot(Density$early.d,Density$mid.early.d,Density$mid.d,Density$mid.late.d,Density$late.d,names=c("0-0.2","0.2-0.4","0.4-0.6","0.6-0.8","0.8-1"),outline=F, cex.axis=0.90, ylim= c(0,1e-07), xlab="Replication time fraction", ylab="Insertion density per tumor/bp", cex.lab=1.5)
+title("b)", adj=0)
+
+stripchart(list(Density$early.d,Density$mid.early.d,Density$mid.d,Density$mid.late.d,Density$late.d), vertical=T, add=T, method="jitter",
+pch=20,cex=1,col=(adjustcolor("darkslategrey",alpha.f=0.3)))
+
+# Export plot
+
+svg(filename="Figure_1b.svg")
+boxplot(Density$early.d,Density$mid.early.d,Density$mid.d,Density$mid.late.d,Density$late.d,names=c("0-0.2","0.2-0.4","0.4-0.6","0.6-0.8","0.8-1"),outline=F, cex.axis=0.90, ylim= c(0,1e-07), xlab="Replication time fraction", ylab="Insertion density per tumor/bp", cex.lab=1.5)
+title("b)", adj=0)
+
+stripchart(list(Density$early.d,Density$mid.early.d,Density$mid.d,Density$mid.late.d,Density$late.d), vertical=T, add=T, method="jitter",
+pch=20,cex=1,col=(adjustcolor("darkslategrey",alpha.f=0.3)))
+
+dev.off()
+
+```
+
+# Figure 2
+
+Retrotransposon insertions in protein-coding genes (GRCh37_87).Gene expression values have been deposited in the Zenodo database under the Digital Object Identifier [10.5281/zenodo.3241399] [https://zenodo.org/deposit/3241399]. 
+
+```{r Figure 2}
+
+## Set color
+colors1 <- "darkblue"
+
+## Open Data
+Genes <-read.table("Genes.txt",sep="\t",header=T,stringsAsFactors=FALSE,row.names=NULL) 
+Genes$ins.cat <- cut(Genes$gene,breaks=c(0,1,2,3,4,Inf),right=F)
+
+## Set color
+colors1 <- adjustcolor(colors1, alpha.f = 0.3)
+
+# Plot
+box.exp <- ggplot(data=Genes, aes(x= ins.cat,y= log1p(tpm)), outlier=F)
+box.exp + geom_boxplot(fill= "white", outlier.shape=NA) + labs(x= "Gene insertion count",y="Log (median tpm)") + geom_point(position = position_jitter(w=0.3), col= colors1, size=0.5)+ theme_bw() + theme(panel.border = element_blank(), panel.grid.major = element_blank(),
+panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) + scale_x_discrete(labels=c("0", "1", "2","3","> 4"))+ labs(title="")
+
+
+# Export plot
+
+svg(filename="Figure_2.svg")
+box.exp <- ggplot(data=Genes, aes(x= ins.cat,y= log1p(tpm)), outlier=F)
+box.exp + geom_boxplot(fill= "white", outlier.shape=NA) + labs(x= "Gene insertion count",y="Log (median tpm)") + geom_point(position = position_jitter(w=0.3), col= colors1, size=0.5)+ theme_bw() + theme(panel.border = element_blank(), panel.grid.major = element_blank(),
+panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) + scale_x_discrete(labels=c("0", "1", "2","3","> 4"))+ labs(title="")
+dev.off()
+
+```
+
+# Figure 3
+
+Retrotransposon insertion distribution in LRP1B and DLG2.
+
+```{r}
+
+setwd("P:/h304/aaltonen/Tatiana/PhD/WGS/Retro_CRC/Somatic/Manuscript_files/Submission_NatComms/NatComms_revision/Top_genes/GenoplotR")
+
+lrp1b <-read.table("LRP1B_270119.txt",sep="\t",header=T,stringsAsFactors=FALSE,row.names=NULL) # Instead Source Data file 1 can be used
+dlg2 <-read.table("DLG2_270119.txt",sep="\t",header=T,stringsAsFactors=FALSE,row.names=NULL) # Instead Source Data file 2 can be used
+gene_seg_lrp1b <- dna_seg(lrp1b)
+gene_seg_dlg2 <- dna_seg(dlg2)
+
+# Plot gene map
+
+plot_gene_map(list(gene_seg_lrp1b,gene_seg_dlg2),dna_seg_scale= TRUE)
+
+# Plot gene map
+
+
+svg(filename="LRP1B_270119.svg", width=17/2.54, height=10/2.54)
+plot_gene_map(list(gene_seg_lrp1b),dna_seg_scale= TRUE)
+dev.off()
+
+
+svg(filename="DLG2_270119.svg", width=17/2.54, height=10/2.54)
+plot_gene_map(list(gene_seg_dlg2),dna_seg_scale= TRUE)
+dev.off()
+
+```
+
+# Figure 5 
+Insertion and AI frequency in 21 fragile sites. a) Insertion fraction over the fraction of allelic imbalance in 21 fragile sites. b) Gene expression (median TPM values from 34 tumors) in fragile sites with high insertion fraction and fragile sites with high allelic imbalance fraction. Fragilesites.txt corresponds to Supplementary Dataset 3 with the following variable name conversion: 
+
+Insertion fraction (n=5072) = ins.fr
+Focal AI events fraction (n=105527) = ai.fr
+Category = cat
+Gene expression (Median TPM) = tpm
+
+```{r Figure 5a}
+# Open data
+FS <-read.table("FragileSites.txt",sep="\t",header=T,stringsAsFactors=FALSE,row.names=1) # Supplementary Dataset 3
+   
+# Plot
+Fig.4a <- ggplot(data=FS,aes(x =ai.fr,y=ins.fr, color=cat))
+Fig.4a <- Fig.4a + geom_point(pch=20,cex=10,col=adjustcolor("dodgerblue4",alpha.f=0.6)) + labs(title="a)",x="Allelic imbalance fraction", y="Insertion fraction") + theme_bw() + theme(panel.border = element_blank(), panel.grid.major = element_blank(),panel.grid.minor = element_blank(),axis.line = element_line(colour = "black"),title = element_text(vjust=2), axis.text = element_text(size=12), axis.title = element_text(size=15)) 
+
+Fig.4a
+# Export plot
+svg(filename="Figure_5a.svg")
+Fig.4a <- ggplot(data=FS,aes(x =ai.fr,y=ins.fr, color=cat))
+Fig.4a <- Fig.4a + geom_point(pch=20,cex=10,col=adjustcolor("dodgerblue4",alpha.f=0.6)) + labs(title="a)",x="Allelic imbalance fraction", y="Insertion fraction") + theme_bw() + theme(panel.border = element_blank(), panel.grid.major = element_blank(),panel.grid.minor = element_blank(),axis.line = element_line(colour = "black"),title = element_text(vjust=2), axis.text = element_text(size=12), axis.title = element_text(size=15)) 
+dev.off()
+
+```
+
+
+
+```{r Figure 5b}
+
+# Plot    
+Fig.4b <- ggplot(na.omit(FS), aes(x=as.factor(cat),y=tpm))
+Fig.4b + geom_boxplot(outlier.shape=NA) + labs(title="b)",x= "fragile site classification",y="Colorectal tumors median tpm") + geom_point(position = position_jitter(w=0.3),col=adjustcolor("dodgerblue4",alpha.f=0.6),size=7)+ theme_bw() + 
+theme(panel.border = element_blank(), panel.grid.major = element_blank(),
+panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),title = element_text(vjust=2), axis.text = element_text(size=12), axis.title = element_text(size=15))
+
+
+# Export plot
+svg(filename="Figure_5b.svg")
+Fig.4b <- ggplot(na.omit(FS), aes(x=as.factor(cat),y=tpm))
+Fig.4b + geom_boxplot(outlier.shape=NA) + labs(title="b)",x= "Fragile site classification",y="Colorectal tumors median tpm") + geom_point(position = position_jitter(w=0.3),col=adjustcolor("dodgerblue4",alpha.f=0.6),size=7)+ theme_bw() + 
+theme(panel.border = element_blank(), panel.grid.major = element_blank(),
+panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),title = element_text(vjust=2), axis.text = element_text(size=12), axis.title = element_text(size=15))
+dev.off()
+
+```
+
+
+# Multiple Linear model
+
+Supplementary Dataset 5 can be used instead of clinical.txt by changing the variable names: 
+
+* Insertion count  = ins
+* CIMP = cimp
+* Allelic imbalance (bp) = aibp
+* BRAF = braf
+* TP53 = tp53
+* Mean coverage = cov.mean
+* RER = rer
+* Dukes tumor stage = dukes
+* Age at diagnosis = age
+* Sex = sex
+* Tumor location = location
+* Times (days) = days
+* Event = status.crc
+
+
+```{r Linear model}
+
+# Open data
+Data<-read.table("Clinical.txt",sep="\t",header=T,stringsAsFactors=F,row.names=1) # clinical.txt = Supplementary Dataset 5
+Data$ins.cat<-cut(Data$ins,breaks=c(0,20,Inf),right=F)
+Data$age.cat<-cut(Data$age,breaks=c(0,55,75,Inf),right=F)
+Data$rer<-as.factor(Data$rer);Data$rer<-relevel(Data$rer,ref="MSS") # might not be needed 
+Data.NM<-Data[,c("ins","ins.cat","age","age.cat","sex","dukes","location","rer","aibp","cimp","braf","days","status.crc","status.os")] # For cox proportional hazards model; status.os not used
+Data.NM<-Data.NM[complete.cases(Data.NM),] # For cox proportional hazards model
+
+
+# Linear model
+
+fit.lm<-lm(log1p(ins)~cimp+I(aibp/(3*10^8))+tp53+rer+I(cov.mean/10)+I(age/10)+sex+dukes+location,data=Data)
+summary(fit.lm)
+
+# Linear model without influential sample 
+fit.lm.noinf <- lm(log1p(ins)~cimp+I(aibp/(3*10^8))+tp53+rer+I(cov.mean/10)+I(age/10)+sex+dukes+location,data=Data[!row.names(Data)%in%"c439_1",])
+summary(fit.lm.noinf)
+
+
+# Linear model including BRAF mut
+
+fit.lm.braf<-lm(log1p(ins)~cimp+I(aibp/(3*10^8))+tp53+rer+I(cov.mean/10)+I(age/10)+sex+dukes+location+braf,data=Data)
+summary(fit.lm.braf)
+
+
+# Linear model only including MSS
+
+Data.MSS <- subset(Data, rer=="MSS")
+
+fit.lm.MSS <- lm(log1p(ins)~cimp+I(aibp/(3*10^8))+tp53+I(cov.mean/10)+I(age/10)+sex+dukes+location,data=Data.MSS)
+summary(fit.lm.MSS)
+
+```
+
+
+```{r Figure S3,S4,S5}
+
+# Model diagnostics
+
+par(mfrow=c(2,3))
+plot(fit.lm,which=1:6)
+
+
+# Export Figure S3
+
+svg(filename="figure_S3.svg")
+par(mfrow=c(2,3))
+plot(fit.lm,which=1:6)
+dev.off()
+
+# Residuals categorical variables
+
+for(i in c("cimp","rer","dukes","sex","location","tp53")){
+  boxplot(residuals(fit.lm)~fit.lm$model[,i],
+    ylab="residuals",
+    xlab=i,
+    outline=F,
+    ylim=range(residuals(fit.lm))
+    )
+  stripchart(residuals(fit.lm)~fit.lm$model[,i],
+    vertical=T,
+    method="jitter",
+    pch=1,
+    add=T,
+    data=Data)
+  abline(h=0)
+}
+
+# Export  figure S4
+
+svg(filename = "Figure_S4.svg")
+for(i in c("cimp","rer","dukes","sex","location","tp53")){
+  boxplot(residuals(fit.lm)~fit.lm$model[,i],
+    ylab="residuals",
+    xlab=i,
+    outline=F,
+    ylim=range(residuals(fit.lm))
+    )
+  stripchart(residuals(fit.lm)~fit.lm$model[,i],
+    vertical=T,
+    method="jitter",
+    pch=1,
+    add=T,
+    data=Data)
+  abline(h=0)
+}
+
+dev.off()
+
+# Residuals continous variables
+
+par(mfrow=c(2,2))
+for(i in c("I(age/10)","I(cov.mean/10)","I(aibp/(3 * 10^8))")){
+  scatter.smooth(fit.lm$model[,i],residuals(fit.lm),
+    xlab=i)
+  abline(h=0)
+}
+par(mfrow=c(1,1))
+
+# Export Figure_S5
+
+svg(filename="Figure_S5")
+par(mfrow=c(2,2))
+for(i in c("I(age/10)","I(cov.mean/10)","I(aibp/(3 * 10^8))")){
+  scatter.smooth(fit.lm$model[,i],residuals(fit.lm),
+    xlab=i)
+  abline(h=0)
+}
+par(mfrow=c(1,1))
+
+
+dev.off()
+
+#Goodness-of-fit
+
+pchisq(sum(residuals(fit.lm)**2),fit.lm$df.residual,lower.tail=F)
+
+#Collinearity
+
+vif(fit.lm)
+
+#Functional form
+
+par(mfrow=c(2,2))
+plot(gam(log1p(ins)~cimp+s(aibp)+tp53+rer+s(cov.mean)+s(age)+sex+dukes+location,
+  data=Data)
+)
+par(mfrow=c(1,1))
+mfp(log1p(ins)~cimp+fp(aibp)+tp53+rer+fp(cov.mean)+fp(age)+sex+dukes+location,
+  alpha=0.15,
+  verbose=T,
+  data=Data
+)
+```
+
+
+#  Cox Proportionals Hazards model
+
+```{r, Survival}
+
+# survival object
+
+surv.dss<-Surv(Data.NM$days,Data.NM$status.crc)
+
+# Kaplan-Meier estimates
+
+survfit.ins.cat<-survfit(surv.dss~ins.cat,data=Data.NM)
+names(survfit.ins.cat$strata)<-levels(Data.NM$ins.cat)
+
+#Cox model
+
+fit.coxph.dss<-coxph(Surv(days,status.crc)~I(ins/10)+rer+cimp+braf+age.cat+sex+dukes+strata(location)+I(aibp/(3*10^8)),data=Data.NM)
+
+#Grambsch-Therneau test
+
+cox.zph(fit.coxph.dss)
+
+#Scaled Schoenfeld residuals
+
+
+ggcoxdiagnostics(fit.coxph.dss,type="scaledsch",ox.scale="time")
+
+
+# Export figure S6
+
+svg(filename="Figure_S6.svg")
+ggcoxdiagnostics(fit.coxph.dss,type="scaledsch",ox.scale="time")
+dev.off()
+
+#DfBeta
+
+ggcoxdiagnostics(fit.coxph.dss, type = "dfbeta",
+                 linear.predictions = FALSE, ggtheme = theme_bw())
+
+# Export Figure S7 
+
+svg(filename="Figure_S7.svg")
+ggcoxdiagnostics(fit.coxph.dss, type = "dfbeta",
+                 linear.predictions = FALSE, ggtheme = theme_bw())
+dev.off()
+
+#Martingale residuals vs. likelihood displacement
+
+ld<-numeric()
+for(i in 1:fit.coxph.dss$n){
+  dB<-residuals(fit.coxph.dss,type="dfbeta")[i,]
+  ld[i]<-t(dB)%*%solve(fit.coxph.dss$var)%*%dB
+}
+plot(residuals(fit.coxph.dss,type="martingale"),ld,pch=3,xlab="Martingale residual",ylab="Likelihood displacement")
+
+
+# Export Figure S8
+
+svg(filename="Figure_S8.svg")
+ld<-numeric()
+for(i in 1:fit.coxph.dss$n){
+  dB<-residuals(fit.coxph.dss,type="dfbeta")[i,]
+  ld[i]<-t(dB)%*%solve(fit.coxph.dss$var)%*%dB
+}
+plot(residuals(fit.coxph.dss,type="martingale"),ld,pch=3,xlab="Martingale residual",ylab="Likelihood displacement")
+dev.off()
+
+
+```
+
+
+
+```{r Kaplan-Meier curves 1,fig.width=7,fig.height=7,fig.cap="Kaplan-Meier curves by insertion count.",out.width="60%",warning=FALSE}
+  ggsurvplot(survfit.ins.cat,
+  size=0.5,
+  xscale="d_y",
+  xlim=c(0,15*365.25),
+  break.x.by=2.5*365.25,
+  risk.table=T,
+  risk.table.col="strata",
+  pval=F,
+  pval.coord=c(12.5*365.25,0.9),
+  xlab="Time after operation (years)",
+  ylab="Disease-specific survival",
+  font.title=c("14","bold","black"),
+  font.legend=c(13,"plain","black"),
+  palette=palette()[-1]
+)
+
+
+
+#Colors
+palette(c("black","#00468B","#BC3C29FF","#0099B4","#868686","#EFC000FF","#20854E","#00468B99","#BC3C2999","#0099B499","#86868699","#20854E99","#E1872799"))
+
+
+# Export Figure 6 
+
+svg(filename ="Figure_6.svg")
+  ggsurvplot(survfit.ins.cat,
+  size=0.5,
+  xscale="d_y",
+  xlim=c(0,15*365.25),
+  break.x.by=2.5*365.25,
+  risk.table=T,
+  risk.table.col="strata",
+  pval=F,
+  pval.coord=c(12.5*365.25,0.9),
+  xlab="Time after operation (years)",
+  ylab="Disease-specific survival",
+  font.title=c("14","bold","black"),
+  font.legend=c(13,"plain","black"),
+  palette=palette()[-1]
+)
+  dev.off()
+
+
+```
